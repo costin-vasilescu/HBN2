@@ -15,8 +15,8 @@ def serialize_embeddings(embeddings, filename):
 
 
 def grid_serialize(model_names: List[str], inputs: Dict[str, pd.Series]):
-    for model_name in tqdm(model_names, desc='Models'):
-        for key, value in tqdm(inputs.items(), desc='Embeddings'):
+    for model_name in tqdm(model_names, desc='Models', leave=True):
+        for key, value in tqdm(inputs.items(), desc='Embeddings', leave=False):
             model = SentenceTransformer(model_name)
             embeddings = model.encode(value)
             serialize_embeddings(embeddings, f'{model_name}/{key}')
