@@ -19,9 +19,18 @@ client = OpenAI(api_key=os.environ.get('OPENAI_API_KEY'))
 
 # Load the dataset
 df = pd.read_csv('tournament_hints_data.csv')
-result_df = pd.DataFrame(columns=['name', 'naics_code', 'naics_label'])
-count = 0
-for index, row in tqdm(df.iterrows()):
+
+try:
+    result_df = pd.read_csv('naics_codes.csv')
+    start_index = result_df.index[-1]
+    count = start_index
+except:
+    result_df = pd.DataFrame(columns=['name', 'naics_code', 'naics_label'])
+    start_index = 0
+    count = 0
+
+df_sliced = df.loc[start_index:]
+for index, row in tqdm(df_sliced.iterrows()):
     count += 1
     replacements = {
         'name': row['commercial_name'],
@@ -53,7 +62,6 @@ for index, row in tqdm(df.iterrows()):
         result_df.to_csv('naics_codes.csv', index=False)
 
 result_df.to_csv('naics_codes.csv', index=False)
-
 
 
 
