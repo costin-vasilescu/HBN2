@@ -16,45 +16,53 @@ class Embeddings:
                    'naics_label', 'naics_description',
                    'hints_name', 'hints_tags', 'hints_short_description',
                    'hints_full_description', 'hints_category']
+        max_hints_idx = len(files['labels'])
         self.embeddings = {}
         for col in columns:
-            with open(f'embeddings/{model_name}/{col}.pkl') as file:
+            with open(f'embeddings/{model_name}/{col}.pkl', 'rb') as file:
                 self.embeddings[col] = pickle.load(file)
+            if col.startswith('hints'):
+                if len(self.embeddings[col]) > max_hints_idx:
+                    self.embeddings[col] = self.embeddings[col][:max_hints_idx]
 
     def _predict_naics(self, input, target_column):
         input_embedding = self.model.encode(input)
-        similarities = cosine_similarity(input_embedding, self.embeddings[target_column])
-        closest_idx = np.argmax(similarities)
+        similarities = cosine_similarity(input_embedding.reshape(1,-1), self.embeddings[target_column])
+        closest_idx = np.argmax(similarities, axis=1)
 
         if target_column.startswith('naics'):
-            pred = self.files['naics']['naics_code'].iloc[closest_idx]
+            file = self.files['naics']
         elif target_column.startswith('hints'):
-            pred = self.files['naics']['naics_code'].iloc[closest_idx]
+            file = self.files['labels']
+        pred = file['naics_code'].iloc[closest_idx]
 
-        return pred
+        return pred.values[0]
 
     def __call__(self, input, round):
-        self._predict_naics(input, target_column=self.targets[round])
+        return self._predict_naics(input, target_column=self.targets[round])
 
 
-targets = {
-    1: 'naics_Label',
-    2: 'naics_label',
-    3: 'naics_description',
-    4: 'naics_description',
-    5: 'naics_label'
-}
-business_taxonomy = pd.read_csv('Business_category_taxonomy.csv')
-naics_taxonomy = pd.read_csv('Naics3labeltaxonomy.csv')
-hints = pd.read_csv('hints.csv')
-labels = pd.read_csv('cleaned_naics_codes.csv')
-files = {
-    'business': business_taxonomy,
-    'naics': naics_taxonomy,
-    'hints': hints,
-    'labels': labels
-}
-
+# targets = {
+#     1: 'hints_category',
+#     2: 'hints_category',
+#     3: 'naics_description',
+#     4: 'naics_description',
+#     5: 'hints_tags'
+# }
+# business_taxonomy = pd.read_csv('Business_category_taxonomy.csv')
+# naics_taxonomy = pd.read_csv('Naics3labeltaxonomy.csv')
+# hints = pd.read_csv('tournament_hints_data.csv')
+# labels = pd.read_csv('cleaned_naics_codes.csv')
+# files = {
+#     'business': business_taxonomy,
+#     'naics': naics_taxonomy,
+#     'hints': hints,
+#     'labels': labels
+# }
+#
+# model_name = 'all-mpnet-base-v2'
+# embeddings = Embeddings(model_name, targets, files)
+# print(embeddings('Designing Faces', 1))
 
 
 
