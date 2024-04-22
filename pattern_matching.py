@@ -1,35 +1,23 @@
 import pandas as pd
-from nltk.stem import PorterStemmer
+from nltk.stem import SnowballStemmer
+import nltk
 
 
 class PatternMatching:
     def __init__(self, labels):
-        names_list = labels['name'].tolist()
-        self.transform_lowercase(names_list)
-        stemmed_names = self.stem_with_nltk(names_list)
-        labels['name'] = stemmed_names
+        self.stemmer = SnowballStemmer('english')
+        labels['name'] = labels['name'].apply(self.preprocess_text)
         self.dataframe = labels
 
-    def transform_lowercase(self, sentences_list):
-        for i in range(len(sentences_list)):
-            sentences_list[i] = sentences_list[i].lower()
-
-    def stem_with_nltk(self, sentences_list):
-        stemmer = PorterStemmer()
-        stemmed_list = []
-
-        for sentence in sentences_list:
-            tokens = sentence.split()
-            stemmed_tokens = [stemmer.stem(token) for token in tokens]
-            stemmed_sentence = ' '.join(stemmed_tokens)
-            stemmed_list.append(stemmed_sentence)
-
-        return stemmed_list
+    def preprocess_text(self, input_text):
+        # Example preprocessing function
+        tokens = nltk.word_tokenize(input_text.lower())
+        stemmed_tokens = [self.stemmer.stem(token) for token in tokens]
+        return ' '.join(stemmed_tokens)
 
     def predict_naics(self, input):
         # Preprocess input
-        input = self.transform_lowercase([input])
-        input = self.stem_with_nltk([input])
+        input = self.preprocess_text(input)
 
         substrings = set()
         for i in range(len(input) - 2):
